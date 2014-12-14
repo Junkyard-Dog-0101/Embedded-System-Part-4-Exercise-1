@@ -11,9 +11,10 @@
 #include <time.h>
 #include <sys/time.h>
 
-int	set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop)
+int			set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop)
 {
-  struct termios newtio, oldtio;
+  struct termios	newtio, oldtio;
+
   if (tcgetattr(fd, &oldtio) != 0)
     { 
       perror("SetupSerial 1");
@@ -89,8 +90,7 @@ int	set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop)
   return (0);
 }
 
-
-int	command_parser(char *cmd)
+int		command_parser(char *cmd)
 {
   char		*gps_output;
   char		*status;
@@ -141,19 +141,31 @@ int	main()
   int	nread;
   char	command[256];
   char	buf;
-  
-  fd = open("./gpsdata.txt", O_RDONLY);
+  int	nset;
+
+  fd = open("/dev/ttySAC1", O_RDONLY);
   if (fd == -1)
-    exit(1);
+    {
+      printf("open failed\n");
+      exit(1);
+    }
+  nset = set_opt(fd, 4800, 8, 'N', 1);
+  if (nset == -1)
+    {
+      printf("set_opt failed\n");
+      exit(1);
+    }
   memset(command, '\0', 256);
   while	(1)
     {
       nread = read(fd, &buf, 1);
-      if (nread == 0)
-	break;
-      concat_command(command, buf);
+      if (nread > 0)
+	{
+	  concat_command(command, buf);
+	  if (buf == 'q')
+	    break;
+	}
     }
   close(fd);
   return (0);
 }
-
